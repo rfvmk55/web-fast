@@ -54,7 +54,7 @@ def main() -> int:
 
         # 2 setpath 改路径
         print("[2] 改 sqlmap 路径")
-        alt = Path("C:/Users/25713/sqlmap-gui-main")
+        alt = Path(os.environ.get("USERPROFILE", "C:/Users/user")) / "sqlmap-gui-main"
         if alt.is_dir():
             r = post("/api/setpath", {"tool": "sqlmap", "path": str(alt)})
             print("    ->", r)
@@ -76,7 +76,7 @@ def main() -> int:
 
         # 4 环境变量覆盖
         print("[4] 环境变量 WEBFAST_SQLMAP")
-        target = "C:/Users/25713/sqlmap-dev"
+        target = str(Path(os.environ.get("USERPROFILE", "C:/Users/user")) / "sqlmap-dev")
         os.environ["WEBFAST_SQLMAP"] = target
         reg4 = Registry().load()
         t4 = reg4.get("sqlmap")
