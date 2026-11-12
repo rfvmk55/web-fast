@@ -1,0 +1,173 @@
+id = "nuclei"
+name = "nuclei"
+category = "漏洞扫描"
+summary = "基于模板的漏洞扫描器，社区模板库覆盖 CVE、默认口令、未授权访问、配置泄露。按标签和严重级别筛选，结果结构化。"
+runner = "binary"
+entry = "nuclei.exe"
+repo = ""
+homepage = "https://github.com/projectdiscovery/nuclei"
+install = "下载 nuclei 发行版 exe 放到 third_party/nuclei/，然后跑一次 nuclei -update-templates 拉模板"
+
+[[param]]
+name = "-u"
+quote = "1"
+label = "目标 URL"
+type = "string"
+group = "目标"
+help = "单个目标。批量扫描用 -l。"
+example = "https://target.com"
+tags = ["url", "目标"]
+
+[[param]]
+name = "-l"
+quote = "1"
+label = "目标列表文件"
+type = "file"
+group = "目标"
+help = "一行一个 URL 的文件，批量扫。"
+tags = ["批量", "列表"]
+
+[[param]]
+name = "-t"
+quote = "1"
+label = "模板路径"
+type = "dir"
+group = "模板"
+help = "指定模板目录或单个 yaml。留空 = 用官方模板库。"
+tags = ["模板", "poc"]
+
+[[param]]
+name = "-tags"
+quote = "0"
+label = "模板标签"
+type = "string"
+group = "模板"
+source = "list:cve|rce|lfi|sqli|xss|ssrf|exposure|default-login|misconfig|takeover|panel|backup|config|tech|fuzz|wordpress|joomla|drupal"
+source_multi = true
+help = "按标签筛模板，逗号分隔。空格弹候选，可多选，自动逗号拼接。"
+example = "cve,rce,exposure"
+tags = ["标签", "筛选", "分类"]
+
+[[param]]
+name = "-severity"
+quote = "0"
+label = "严重级别"
+type = "string"
+group = "模板"
+source = "list:critical|high|medium|low|info|unknown"
+source_multi = true
+help = "critical,high,medium,low,info 任选，逗号分隔。空格弹候选可多选。"
+example = "critical,high"
+tags = ["级别", "高危", "严重"]
+
+[[param]]
+name = "-as"
+label = "自动扫已知技术栈"
+type = "bool"
+group = "模板"
+help = "先指纹识别，只跑与该技术栈相关的模板。快很多。"
+tags = ["指纹", "自动", "加速"]
+
+[[param]]
+name = "-rl"
+quote = "0"
+label = "限速(请求/秒)"
+type = "int"
+default = 150
+group = "性能"
+help = "全局 QPS 上限。默认 150，被 WAF 拦就降到 30。"
+tags = ["限速", "qps"]
+
+[[param]]
+name = "-c"
+quote = "0"
+label = "并发模板数"
+type = "int"
+default = 25
+group = "性能"
+help = "同时跑多少个模板。"
+tags = ["并发"]
+
+[[param]]
+name = "-bs"
+quote = "0"
+label = "单主机并发"
+type = "int"
+default = 25
+group = "性能"
+help = "对同一主机的并发请求数。"
+tags = ["并发", "主机"]
+
+[[param]]
+name = "-timeout"
+quote = "0"
+label = "超时(秒)"
+type = "int"
+default = 10
+group = "性能"
+help = "单请求超时。"
+tags = ["超时"]
+
+[[param]]
+name = "-proxy"
+quote = "1"
+label = "代理"
+type = "string"
+group = "请求"
+help = "走 Burp 或代理池。"
+example = "http://127.0.0.1:8080"
+tags = ["代理", "burp"]
+
+[[param]]
+name = "-H"
+quote = "1"
+label = "自定义请求头"
+type = "string"
+repeat = true
+group = "请求"
+help = "多个用逗号分隔。"
+example = "Cookie: session=abc"
+tags = ["header", "cookie"]
+
+[[param]]
+name = "-silent"
+label = "静默"
+type = "bool"
+default = true
+group = "输出"
+help = "只输出命中行，去掉横幅。"
+tags = ["静默"]
+
+[[param]]
+name = "-jsonl"
+label = "JSONL 输出"
+type = "bool"
+group = "输出"
+help = "结构化输出，一行一个 JSON，方便喂给其它工具。"
+tags = ["json", "结构化"]
+
+[[param]]
+name = "-o"
+quote = "1"
+label = "结果文件"
+type = "path"
+group = "输出"
+help = "结果落盘。"
+example = "output/nuclei.jsonl"
+tags = ["输出", "保存"]
+
+[[template]]
+name = "只打高危"
+desc = "critical+high，自动指纹"
+[template.values]
+"-severity" = "critical,high"
+"-as" = true
+"-silent" = true
+"-rl" = 100
+
+[[template]]
+name = "CVE 专项"
+desc = "只跑 cve 标签模板"
+[template.values]
+"-tags" = "cve"
+"-silent" = true

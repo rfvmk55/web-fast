@@ -1,0 +1,178 @@
+id = "commix"
+name = "commix"
+category = "注入"
+summary = "命令注入（OS Command Injection）检测与利用。输入点、参数、请求头都能试，命中后可直接执行系统命令。"
+runner = "python"
+entry = "commix.py"
+repo = "https://github.com/commixproject/commix.git"
+homepage = "https://github.com/commixproject/commix"
+install = "webfast fetch commix"
+requires = []
+
+[[param]]
+name = "--url"
+quote = "1"
+label = "目标 URL"
+type = "string"
+required = true
+group = "目标"
+help = "带参数的 URL，参数值后面可以留空让 commix 自己填 payload。"
+example = "http://target/dvwa/vulnerabilities/exec/?ip=127.0.0.1&Submit=Submit"
+tags = ["url", "目标"]
+
+[[param]]
+name = "--data"
+quote = "1"
+label = "POST 数据"
+type = "string"
+group = "目标"
+help = "POST 方式提交的参数串。"
+example = "ip=127.0.0.1&Submit=Submit"
+tags = ["post", "表单"]
+
+[[param]]
+name = "--cookie"
+quote = "1"
+label = "Cookie"
+type = "string"
+group = "目标"
+help = "登录态 Cookie，整串贴进来。"
+example = "PHPSESSID=abc123; security=low"
+tags = ["cookie", "登录"]
+
+[[param]]
+name = "--level"
+quote = "0"
+label = "测试等级"
+type = "choice"
+choices = ["1", "2", "3"]
+default = "1"
+group = "检测"
+help = "1 基础输入点；2 加 Cookie/UA/Referer 等头部；3 全量，慢。"
+tags = ["等级", "深度"]
+
+[[param]]
+name = "--technique"
+quote = "0"
+label = "检测技术"
+type = "choice"
+choices = ["classic", "eval", "time", "file"]
+group = "检测"
+help = "classic 常规回显；eval 代码注入；time 时间盲注；file 文件写入。留空 = 全试。"
+tags = ["技术", "盲注", "时间"]
+
+[[param]]
+name = "--prefix"
+quote = "1"
+label = "payload 前缀"
+type = "string"
+group = "检测"
+help = "目标过滤严格时手工补前缀，如 \"; 或 '。"
+example = "\";"
+tags = ["前缀", "绕过"]
+
+[[param]]
+name = "--suffix"
+quote = "1"
+label = "payload 后缀"
+type = "string"
+group = "检测"
+help = "配合前缀收尾。"
+example = "//"
+tags = ["后缀", "绕过"]
+
+[[param]]
+name = "--tamper"
+quote = "0"
+label = "Tamper 脚本"
+type = "string"
+group = "检测"
+help = "变形绕过过滤，如 space2ifs。"
+example = "space2ifs"
+tags = ["waf", "绕过"]
+
+[[param]]
+name = "--random-agent"
+label = "随机 UA"
+type = "bool"
+default = true
+group = "检测"
+help = "请求头 UA 随机化。"
+tags = ["ua", "伪装"]
+
+[[param]]
+name = "--proxy"
+quote = "1"
+label = "代理"
+type = "string"
+group = "检测"
+help = "走 Burp 看请求包。"
+example = "http://127.0.0.1:8080"
+tags = ["代理", "burp"]
+
+[[param]]
+name = "--delay"
+quote = "0"
+label = "请求间隔(秒)"
+type = "float"
+group = "检测"
+help = "限速，避免被封。"
+tags = ["限速", "延迟"]
+
+[[param]]
+name = "--batch"
+label = "全自动（不交互）"
+type = "bool"
+default = true
+group = "运行"
+help = "不问问题直接跑，GUI 下必须开。"
+tags = ["自动", "免交互"]
+
+[[param]]
+name = "--os-cmd"
+quote = "1"
+label = "直接执行命令"
+type = "string"
+group = "利用"
+help = "已知有洞时跳过检测，直接执行这条系统命令。"
+example = "id"
+tags = ["命令执行", "rce", "执行"]
+
+[[param]]
+name = "--os-shell"
+label = "开交互 shell"
+type = "bool"
+group = "利用"
+help = "拿到注入后打开伪 shell，可以连续输入命令。"
+tags = ["shell", "交互"]
+
+[[param]]
+name = "--file-write"
+quote = "1"
+label = "写文件到目标"
+type = "string"
+group = "利用"
+help = "把本地文件上传到目标机器。"
+tags = ["上传", "写文件"]
+
+[[param]]
+name = "--output-dir"
+label = "结果目录"
+type = "dir"
+group = "输出"
+help = "日志和会话存放位置。"
+tags = ["输出", "目录"]
+
+[[template]]
+name = "快速扫 GET 参数"
+desc = "level1 全自动"
+[template.values]
+"--level" = "1"
+"--batch" = true
+
+[[template]]
+name = "深扫 + 头部"
+desc = "level3 全技术，慢"
+[template.values]
+"--level" = "3"
+"--batch" = true

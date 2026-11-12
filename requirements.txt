@@ -1,0 +1,3 @@
+# 桌面窗口依赖（只用浏览器模式可以不装）
+# pip install -r requirements.txt
+pywebview>=4.0

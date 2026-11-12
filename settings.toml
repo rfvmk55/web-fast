@@ -1,0 +1,6 @@
+# web-fast 全局配置
+# 工具根目录：所有第三方工具的存放位置（相对本文件或绝对路径）
+tools_root = "third_party"
+
+# GUI 默认搜索框关键词（留空 = 显示全部）
+default_search = ""

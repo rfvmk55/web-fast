@@ -1,0 +1,33 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# 打包产物
+build/
+dist/
+*.spec.bak
+
+# 本机路径配置（换电脑会变）
+local_paths.toml
+local_paths.toml.bak-*
+
+# 工具本体（体积大，不随仓库走）
+third_party/
+
+# 运行产物
+output/
+profiles/
+*.log
+
+# 编辑器
+.vscode/
+.idea/
+*.swp
+
+# 个人配置与一次性靶场脚本，不进仓库
+AGENTS.md
+README.old.md
+dasctf_httpctf2_probe.py

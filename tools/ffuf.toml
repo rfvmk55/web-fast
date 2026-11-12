@@ -1,0 +1,211 @@
+id = "ffuf"
+name = "ffuf"
+category = "目录扫描"
+summary = "Go 写的极速 fuzz 器。目录、参数、子域名、POST 数据都能 fuzz，靠 FUZZ 关键字定位注入点。比 dirsearch 快一个量级。"
+runner = "binary"
+entry = "ffuf.exe"
+repo = "https://github.com/ffuf/ffuf.git"
+homepage = "https://github.com/ffuf/ffuf"
+install = "下载 ffuf 发行版 exe 放到 third_party/ffuf/，或 go install github.com/ffuf/ffuf/v2@latest 后把 exe 放进 PATH"
+
+[[param]]
+name = "-u"
+quote = "1"
+label = "目标 URL（含 FUZZ）"
+type = "string"
+required = true
+group = "目标"
+help = "FUZZ 就是字典插入点，可以出现多处。注意大写。"
+example = "http://target/FUZZ"
+tags = ["url", "fuzz", "字典位置"]
+
+[[param]]
+name = "-w"
+quote = "1"
+label = "字典文件"
+type = "file"
+required = true
+group = "字典"
+help = "字典路径，也可以用内置关键字，如 -w /usr/share/seclists/... 。多个字典用 : 分隔（多 FUZZ）。"
+example = "dict.txt"
+tags = ["字典", "wordlist"]
+
+[[param]]
+name = "-X"
+label = "HTTP 方法"
+type = "choice"
+choices = ["GET", "POST", "PUT", "DELETE", "PATCH", "HEAD", "OPTIONS"]
+default = "GET"
+group = "请求"
+help = "请求方法。默认 GET。"
+tags = ["方法", "method"]
+
+[[param]]
+name = "-d"
+quote = "1"
+label = "POST 数据（含 FUZZ）"
+type = "string"
+group = "请求"
+help = "POST 请求体，FUZZ 标出要替换的位置。"
+example = "username=admin&password=FUZZ"
+tags = ["post", "参数", "fuzz"]
+
+[[param]]
+name = "-H"
+quote = "1"
+label = "请求头"
+type = "string"
+repeat = true
+group = "请求"
+help = "加请求头，多个用逗号分隔。常用来带 Cookie 或伪造 Host。"
+example = "Cookie: session=abc, X-Forwarded-For: 127.0.0.1"
+tags = ["header", "cookie", "请求头"]
+
+[[param]]
+name = "-b"
+quote = "1"
+label = "Cookie"
+type = "string"
+group = "请求"
+help = "整串 Cookie。"
+tags = ["cookie", "登录"]
+
+[[param]]
+name = "-mc"
+quote = "0"
+label = "保留状态码"
+type = "string"
+group = "过滤"
+help = "只显示这些状态码，逗号分隔或区间 200-299。"
+example = "200,204,301,302"
+tags = ["状态码", "保留", "match"]
+
+[[param]]
+name = "-fc"
+quote = "0"
+label = "屏蔽状态码"
+type = "string"
+group = "过滤"
+help = "丢掉这些状态码。软 404 站点常用。"
+example = "404"
+tags = ["状态码", "排除"]
+
+[[param]]
+name = "-fs"
+quote = "0"
+label = "屏蔽响应长度"
+type = "string"
+group = "过滤"
+help = "响应体大小匹配这些值就丢掉。软 404 页面往往长度固定。"
+example = "0,1234"
+tags = ["长度", "size", "软404"]
+
+[[param]]
+name = "-t"
+quote = "0"
+label = "并发线程"
+type = "int"
+default = 40
+group = "性能"
+help = "并发数。目标扛得住可以开到 100+。"
+tags = ["线程", "并发"]
+
+[[param]]
+name = "-rate"
+quote = "0"
+label = "每秒请求数"
+type = "int"
+group = "性能"
+help = "限制 QPS，0 = 不限。被限流时设成 20-50。"
+tags = ["限速", "qps"]
+
+[[param]]
+name = "-timeout"
+quote = "0"
+label = "超时(秒)"
+type = "int"
+default = 10
+group = "性能"
+help = "单请求超时。"
+tags = ["超时"]
+
+[[param]]
+name = "-r"
+label = "跟随跳转"
+type = "bool"
+group = "扫描"
+help = "跟随 3xx 跳转。"
+tags = ["跳转", "redirect"]
+
+[[param]]
+name = "-recursion"
+label = "递归 fuzz"
+type = "bool"
+group = "扫描"
+help = "对命中的目录继续 fuzz。"
+tags = ["递归"]
+
+[[param]]
+name = "-recursion-depth"
+quote = "0"
+label = "递归深度"
+type = "int"
+default = 2
+group = "扫描"
+help = "递归最大层数。"
+tags = ["深度"]
+
+[[param]]
+name = "-c"
+label = "彩色输出"
+type = "bool"
+default = true
+group = "输出"
+help = "彩色标记不同状态码。"
+tags = ["颜色"]
+
+[[param]]
+name = "-s"
+label = "静默"
+type = "bool"
+group = "输出"
+help = "只输出结果行，去掉横幅和统计。"
+tags = ["静默"]
+
+[[param]]
+name = "-of"
+label = "输出格式"
+type = "choice"
+choices = ["json", "ejson", "html", "md", "csv", "svg"]
+default = "json"
+group = "输出"
+help = "结果文件格式。"
+tags = ["格式", "json"]
+
+[[param]]
+name = "-o"
+quote = "1"
+label = "结果文件"
+type = "path"
+group = "输出"
+help = "把结果写到这个文件。"
+example = "output/ffuf.json"
+tags = ["输出", "保存"]
+
+[[template]]
+name = "目录爆破"
+desc = "FUZZ 放在路径，屏蔽 404"
+[template.values]
+"-u" = "http://TARGET/FUZZ"
+"-mc" = "200,204,301,302,307,401,403"
+"-c" = true
+"-t" = 40
+
+[[template]]
+name = "参数名 fuzz"
+desc = "找隐藏 GET 参数"
+[template.values]
+"-u" = "http://TARGET/index.php?FUZZ=1"
+"-fc" = "404"
+"-fs" = "0"
+"-c" = true

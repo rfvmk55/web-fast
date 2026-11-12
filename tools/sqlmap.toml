@@ -1,0 +1,300 @@
+id = "sqlmap"
+name = "sqlmap"
+category = "注入"
+summary = "自动化 SQL 注入检测与利用。测出注入点后能列库、列表、dump 数据，支持布尔/时间/报错/联合/堆叠五种技术。"
+runner = "python"
+entry = "sqlmap.py"
+repo = "https://github.com/sqlmapproject/sqlmap.git"
+homepage = "https://github.com/sqlmapproject/sqlmap"
+install = "webfast fetch sqlmap"
+requires = []
+
+[[setting]]
+key = "txt_dir"
+label = "请求文件目录"
+type = "dir"
+default = "txt"
+help = "Burp 导出的请求文件放这，-r 弹窗从这列。不是 sqlmap 自带的，没有就点创建"
+
+[[setting]]
+key = "tamper_dir"
+label = "Tamper 脚本目录"
+type = "dir"
+default = "tamper"
+help = "sqlmap 自带，84 个绕过脚本，--tamper 弹窗列的就是它"
+
+[[setting]]
+key = "output_dir"
+label = "结果输出目录"
+type = "dir"
+default = "output"
+help = "dump 数据和会话缓存写这，sqlmap 第一次跑会自动建"
+
+[[param]]
+name = "-u"
+quote = "1"
+label = "目标 URL"
+type = "string"
+required = true
+group = "目标"
+help = "带参数的完整 URL。-u 与 --url 等价，这里统一用 -u。"
+example = "http://testphp.vulnweb.com/artists.php?artist=1"
+tags = ["url", "目标", "地址", "靶标"]
+
+[[param]]
+name = "-r"
+quote = "1"
+label = "请求文件"
+type = "file"
+group = "目标"
+source = "glob:${txt_dir}/*.txt"
+help = "从 Burp 保存的 HTTP 请求文件里读目标。输入 -r 后按空格，会弹出 sqlmap 目录下 txt 文件夹里的文件给你选。"
+example = "txt/request.txt"
+tags = ["请求文件", "burp", "抓包", "文件"]
+
+[[param]]
+name = "--data"
+quote = "1"
+label = "POST 数据"
+type = "string"
+group = "目标"
+help = "存在这个参数时 sqlmap 发 POST 请求。参数名和值都要写全，多个用 & 连接。"
+example = "username=admin&password=1"
+tags = ["post", "表单", "提交"]
+
+[[param]]
+name = "--cookie"
+quote = "1"
+label = "Cookie"
+type = "string"
+group = "目标"
+help = "带 Cookie 测试登录后的页面。整串原样贴进来。"
+example = "PHPSESSID=abc123; security=low"
+tags = ["cookie", "登录", "认证"]
+
+[[param]]
+name = "--random-agent"
+label = "随机 UA"
+type = "bool"
+default = true
+group = "目标"
+help = "每个请求换一个 User-Agent，降低被 WAF 按 UA 拦掉的概率。"
+tags = ["ua", "user-agent", "伪装"]
+
+[[param]]
+name = "--proxy"
+quote = "1"
+label = "代理"
+type = "string"
+group = "目标"
+source = "list:http://127.0.0.1:8080|socks5://127.0.0.1:1080|socks5h://127.0.0.1:1080"
+help = "走 Burp 或代理池，方便看流量。Burp 默认 127.0.0.1:8080。"
+example = "http://127.0.0.1:8080"
+tags = ["代理", "burp", "抓包"]
+
+[[param]]
+name = "--delay"
+label = "请求间隔(秒)"
+type = "float"
+group = "目标"
+help = "每个请求之间等待的秒数，小数值可用。被限流或封 IP 时调大。"
+example = "0.5"
+tags = ["限速", "延迟", "防封"]
+
+[[param]]
+name = "-p"
+label = "指定注入参数"
+type = "string"
+group = "注入"
+help = "只测指定参数，跳过自动发现，省时间。多个用逗号分隔。"
+example = "id,name"
+tags = ["参数", "指定", "测试点"]
+
+[[param]]
+name = "--dbms"
+quote = "0"
+label = "数据库类型"
+type = "string"
+group = "注入"
+source = "list:mysql|mssql|postgresql|oracle|sqlite|access|db2|firebird|sybase"
+help = "已知后端数据库时直接指定，能提速并提高识别率。空格弹出常见数据库列表。"
+example = "mysql"
+tags = ["数据库", "mysql", "类型"]
+
+[[param]]
+name = "--level"
+quote = "0"
+label = "测试等级"
+type = "choice"
+choices = ["1", "2", "3", "4", "5"]
+default = "1"
+group = "注入"
+help = "1 最快只测 GET/POST，2 加 Cookie，3 加 UA/Referer，4 加更多边界，5 最全最慢。"
+tags = ["等级", "深度", "level"]
+
+[[param]]
+name = "--risk"
+quote = "0"
+label = "风险等级"
+type = "choice"
+choices = ["1", "2", "3"]
+default = "1"
+group = "注入"
+help = "1 安全，2 加入时间盲注和重查询，3 加入 OR 型 payload（可能改数据）。"
+tags = ["风险", "risk"]
+
+[[param]]
+name = "--technique"
+quote = "0"
+label = "注入技术"
+type = "string"
+group = "注入"
+source = "list:B:布尔盲注|E:报错注入|U:联合查询|S:堆叠查询|T:时间盲注|Q:内联查询|BEUST:全部五种"
+help = "B 布尔盲注 / E 报错 / U 联合 / S 堆叠 / T 时间盲注 / Q 内联。空格弹候选，也可以自己拼组合。"
+example = "U"
+tags = ["技术", "布尔", "联合", "时间盲注", "技术选型"]
+
+[[param]]
+name = "--tamper"
+quote = "0"
+label = "Tamper 脚本"
+type = "string"
+group = "注入"
+source = "glob:${tamper_dir}/*.py"
+source_noext = true
+source_multi = true
+help = "绕过 WAF 的变形脚本，多个用逗号分隔。输入 --tamper 后按空格，弹出 tamper 目录里的脚本列表。"
+example = "space2comment,between"
+tags = ["waf", "绕过", "变形", "tamper"]
+
+[[param]]
+name = "--threads"
+quote = "0"
+label = "线程数"
+type = "int"
+default = 1
+group = "注入"
+help = "并发线程。盲注时每线程都在打目标，别开太高，1-5 比较稳。"
+tags = ["线程", "并发", "速度"]
+
+[[param]]
+name = "--batch"
+label = "全自动（不交互）"
+type = "bool"
+default = true
+group = "注入"
+help = "所有询问都回车选默认值，不做交互。GUI 环境下必须开，否则卡住等输入。"
+tags = ["自动", "免交互", "batch"]
+
+[[param]]
+name = "--dbs"
+label = "列出所有数据库"
+type = "bool"
+group = "枚举"
+help = "拿到注入点后枚举数据库名。"
+tags = ["库", "枚举", "databases"]
+
+[[param]]
+name = "-D"
+label = "数据库名"
+type = "string"
+group = "枚举"
+help = "配合 --tables / --dump 使用，指定要操作哪个库。"
+example = "acuart"
+tags = ["库名", "database"]
+
+[[param]]
+name = "--tables"
+label = "列出表"
+type = "bool"
+group = "枚举"
+help = "列出当前库（或 -D 指定库）下的所有表。"
+tags = ["表", "tables"]
+
+[[param]]
+name = "-T"
+label = "表名"
+type = "string"
+group = "枚举"
+help = "配合 --columns / --dump，指定要操作哪张表。"
+example = "users"
+tags = ["表名", "table"]
+
+[[param]]
+name = "--columns"
+label = "列出字段"
+type = "bool"
+group = "枚举"
+help = "列出 -T 指定表的字段。"
+tags = ["字段", "列", "columns"]
+
+[[param]]
+name = "-C"
+label = "字段名"
+type = "string"
+group = "枚举"
+help = "指定要 dump 的字段，多个用逗号分隔。"
+example = "username,password"
+tags = ["字段名", "column"]
+
+[[param]]
+name = "--dump"
+label = "导出数据"
+type = "bool"
+group = "枚举"
+help = "导出行数据。配合 -D -T -C 精确定位，不指定就会 dump 整库（慢且大）。"
+tags = ["dump", "导出", "数据"]
+
+[[param]]
+name = "--os-shell"
+quote = "1"
+label = "尝试拿系统 shell"
+type = "bool"
+group = "利用"
+help = "条件满足时直接在数据库主机上执行系统命令。"
+tags = ["shell", "命令执行", "提权"]
+
+[[param]]
+name = "-v"
+quote = "0"
+label = "详细度"
+type = "choice"
+choices = ["0", "1", "2", "3", "4", "5", "6"]
+default = "1"
+group = "输出"
+help = "3 显示注入 payload，6 全是调试信息。排查不出注入点时就调到 3 看细节。"
+tags = ["日志", "详细", "调试"]
+
+[[param]]
+name = "--output-dir"
+quote = "1"
+label = "结果目录"
+type = "dir"
+group = "输出"
+help = "dump 出来的文件和会话缓存放哪。留空 = sqlmap 默认的 output 目录。"
+tags = ["输出", "目录", "结果"]
+
+[[template]]
+name = "快测注入点"
+desc = "level1 risk1 全自动，只看有没有洞"
+[template.values]
+"--level" = "1"
+"--risk" = "1"
+"--batch" = true
+
+[[template]]
+name = "枚举库表字段"
+desc = "level1，先列库列表"
+[template.values]
+"--level" = "2"
+"--dbs" = true
+"--batch" = true
+
+[[template]]
+name = "绕过 WAF"
+desc = "space2comment + between 双 tamper"
+[template.values]
+"--tamper" = "space2comment,between"
+"--random-agent" = true
+"--delay" = "0.5"
+"--batch" = true

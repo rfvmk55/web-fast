@@ -1,0 +1,228 @@
+id = "dirsearch"
+name = "dirsearch"
+category = "目录扫描"
+summary = "目录与文件爆破。内置字典，支持状态码过滤、递归、代理、结果落盘，是找后台/备份/配置文件的主力。"
+runner = "python"
+entry = "dirsearch.py"
+repo = "https://github.com/maurosoria/dirsearch.git"
+homepage = "https://github.com/maurosoria/dirsearch"
+install = "webfast fetch dirsearch  或  webfast fetch dirsearch --pip"
+pip = "dirsearch"
+requires = ["requests", "urllib3", "cryptography", "pyparsing", "bs4", "chardet", "colorama", "jinja2", "defusedxml"]
+
+[[setting]]
+key = "dict_dir"
+label = "字典目录"
+type = "dir"
+default = "db"
+help = "自带 db/ 字典目录，-w 弹窗从这列。也可换成自己的字典文件夹"
+
+[[setting]]
+key = "output_dir"
+label = "结果输出目录"
+type = "dir"
+default = ""
+help = "扫描结果默认写到哪，留空就按 -o 指定的来"
+
+[[param]]
+name = "-u"
+quote = "1"
+label = "目标 URL"
+type = "string"
+required = true
+group = "目标"
+help = "只写到域名或目录，不要带具体文件名。"
+example = "http://target.com/"
+tags = ["url", "目标"]
+
+[[param]]
+name = "-w"
+quote = "1"
+label = "字典文件"
+type = "file"
+group = "字典"
+source = "glob:${dict_dir}/*.txt"
+help = "留空用内置字典（db/dicc.txt）。输入 -w 后按空格，弹出 db 目录里的字典给你选。"
+tags = ["字典", "wordlist", "路径爆破"]
+
+[[param]]
+name = "-e"
+source_multi = true
+source = "list:php|html|htm|js|css|txt|bak|zip|rar|tar|tar.gz|asp|aspx|jsp|do|action|xml|json|conf|sql|log|ini|env|swp|old|orig"
+quote = "0"
+label = "扩展名"
+type = "string"
+group = "字典"
+help = "只测指定后缀，逗号分隔。php,asp,aspx,jsp,bak,zip,txt"
+example = "php,html,bak,zip"
+tags = ["后缀", "扩展", "备份文件"]
+
+[[param]]
+name = "--exclude-extensions"
+quote = "0"
+label = "排除扩展名"
+type = "string"
+group = "字典"
+help = "跳过这些后缀，减少噪音。注意 dirsearch 的 -x 是排除状态码，不是这个。"
+example = "jpg,png,gif,css,js"
+tags = ["排除", "过滤", "后缀"]
+
+[[param]]
+name = "-t"
+quote = "0"
+label = "线程数"
+type = "int"
+default = 30
+group = "性能"
+help = "并发线程。默认 30，被限流就降到 10。"
+tags = ["线程", "并发", "速度"]
+
+[[param]]
+name = "--timeout"
+label = "超时(秒)"
+type = "float"
+default = 7.5
+group = "性能"
+help = "单个请求最长等多久。目标慢就调大。"
+tags = ["超时", "timeout"]
+
+[[param]]
+name = "--delay"
+label = "请求间隔(秒)"
+type = "float"
+group = "性能"
+help = "每个请求之间的等待，防封。"
+tags = ["延迟", "限速"]
+
+[[param]]
+name = "-r"
+label = "递归扫描"
+type = "bool"
+group = "扫描"
+help = "对扫出来的目录继续往下扫。可能很久，配合 -R 限深度。"
+tags = ["递归", "深度扫描"]
+
+[[param]]
+name = "-R"
+quote = "0"
+label = "递归深度"
+type = "int"
+default = 3
+group = "扫描"
+help = "递归最大层数。"
+tags = ["深度", "递归"]
+
+[[param]]
+name = "--exclude-status"
+quote = "0"
+label = "排除状态码"
+type = "string"
+group = "过滤"
+source = "list:200:正常|301:永久跳转|302:临时跳转|400:请求错误|401:未认证|403:禁止访问|404:不存在|405:方法不允许|500:服务器错误|502:网关错误|503:服务不可用"
+source_multi = true
+help = "把这些状态码的结果丢掉，逗号分隔，短名 -x。空格弹状态码候选，可多选。软 404 站点常用 301,302,404。"
+example = "301,302,404"
+tags = ["状态码", "过滤", "软404"]
+
+[[param]]
+name = "-f"
+label = "强制扩展"
+type = "bool"
+group = "扫描"
+help = "在 URL 后强制加扩展名，适合 index 型站点。"
+tags = ["扩展", "index"]
+
+[[param]]
+name = "--include-status"
+quote = "0"
+label = "保留状态码"
+type = "string"
+group = "过滤"
+source = "list:200:正常|301:永久跳转|302:临时跳转|401:未认证|403:禁止访问"
+source_multi = true
+help = "只保留这些状态码的结果，逗号分隔，短名 -i。和 --exclude-status 二选一更清晰。"
+
+[[param]]
+name = "--full-url"
+label = "输出完整 URL"
+type = "bool"
+group = "输出"
+help = "结果里显示完整地址，方便直接复制。"
+tags = ["输出", "url"]
+
+[[param]]
+name = "--random-agent"
+label = "随机 UA"
+type = "bool"
+default = true
+group = "绕过"
+help = "随机 User-Agent，降低被拦概率。"
+tags = ["ua", "伪装"]
+
+[[param]]
+name = "--proxy"
+quote = "1"
+label = "代理"
+type = "string"
+group = "绕过"
+source = "list:http://127.0.0.1:8080|socks5://127.0.0.1:1080"
+help = "走代理或 Burp。"
+example = "http://127.0.0.1:8080"
+tags = ["代理", "burp"]
+
+[[param]]
+name = "--follow-redirects"
+label = "跟随跳转"
+type = "bool"
+group = "扫描"
+help = "自动跟 3xx，能发现跳转后的真实页面。"
+tags = ["跳转", "redirect"]
+
+[[param]]
+name = "-o"
+quote = "1"
+label = "结果文件"
+type = "path"
+group = "输出"
+help = "把结果写到文件。配合 --format 选格式。"
+example = "output/dirsearch.txt"
+tags = ["输出", "保存"]
+
+[[param]]
+name = "--output-formats"
+quote = "0"
+label = "结果格式"
+type = "choice"
+choices = ["simple", "plain", "json", "xml", "md", "csv", "html", "sqlite"]
+default = "plain"
+group = "输出"
+help = "结果文件格式，json 方便后面脚本处理。"
+tags = ["格式", "json"]
+
+[[param]]
+name = "-q"
+label = "静默（只出结果）"
+type = "bool"
+group = "输出"
+help = "隐藏 banner 和进度，只打命中行。"
+tags = ["静默", "安静"]
+
+[[template]]
+name = "常规扫站"
+desc = "30 线程 + 常见后缀 + 递归"
+[template.values]
+"-t" = 30
+"-e" = "php,html,bak,zip,txt"
+"-r" = true
+"-R" = 3
+"--exclude-status" = "404"
+"--random-agent" = true
+
+[[template]]
+name = "快速浅扫"
+desc = "只看一层，结果落盘"
+[template.values]
+"-t" = 50
+"--timeout" = 5
+"-q" = true
+"--full-url" = true

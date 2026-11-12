@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Web-Fast · BaBaTa</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<div class="app">
+
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="logo">⚡</div>
+      <div class="brand-text">
+        <div class="title">web-fast</div>
+        <div class="sub">Web 安全工具终端</div>
+      </div>
+    </div>
+
+    <div class="search-box">
+      <svg viewBox="0 0 24 24" width="14" height="14"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2"/><path d="M16.5 16.5L21 21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      <input id="search" placeholder="搜索工具或参数" autocomplete="off">
+    </div>
+
+    <nav id="toolList" class="tool-list"></nav>
+
+    <div class="side-foot">
+      <span id="readyStat" class="ready-stat">–</span>
+      <button id="btnDoctor" class="ghost">体检</button>
+    </div>
+  </aside>
+
+  <main class="main">
+    <header class="toolbar">
+      <div class="tool-info">
+        <span id="toolName" class="tool-name">未选择工具</span>
+        <span id="toolBadge" class="badge hidden"></span>
+        <span id="toolPath" class="tool-path"></span>
+      </div>
+      <div class="actions">
+        <button id="btnParams" class="ghost ic" title="参数表">
+          <svg viewBox="0 0 24 24" width="14" height="14"><path d="M4 6h16M4 12h16M4 18h10" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/></svg>
+          <span>参数</span>
+        </button>
+        <button id="btnOpenDir" class="ghost ic" title="打开工具目录">
+          <svg viewBox="0 0 24 24" width="14" height="14"><path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linejoin="round"/></svg>
+          <span>目录</span>
+        </button>
+        <button id="btnSettings" class="ghost ic" title="设置">
+          <svg viewBox="0 0 24 24" width="14" height="14"><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.8" fill="none"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" fill="none"/></svg>
+          <span>设置</span>
+        </button>
+        <button id="btnStop" class="ghost ic danger" title="停止当前命令" disabled>
+          <svg viewBox="0 0 24 24" width="12" height="12"><rect x="6" y="6" width="12" height="12" rx="2" fill="currentColor"/></svg>
+          <span>停止</span>
+        </button>
+      </div>
+    </header>
+
+    <div class="tabbar">
+      <div class="tabs" id="tabs"></div>
+      <button id="btnNewTab" class="tab-new" title="新建标签页">+</button>
+    </div>
+
+    <div id="findBar" class="findbar hidden">
+      <svg viewBox="0 0 24 24" width="14" height="14"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2"/><path d="M16.5 16.5L21 21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      <input id="findInput" placeholder="在当前标签的输出里查找…" autocomplete="off" spellcheck="false">
+      <span id="findCount" class="findcount"></span>
+      <button id="findPrev" class="ghost" title="上一个 (Shift+Enter)">↑</button>
+      <button id="findNext" class="ghost" title="下一个 (Enter)">↓</button>
+      <button id="findClose" class="ghost" title="关闭 (Esc)">×</button>
+    </div>
+
+    <section class="terminal">
+      <div id="outputWrap" class="output-wrap"></div>
+      <div class="input-row">
+        <span id="prompt" class="prompt">PS &gt;</span>
+        <div class="input-wrap">
+          <input id="cmd" autocomplete="off" spellcheck="false" autocapitalize="off">
+          <div id="picker" class="picker hidden"></div>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<div id="modal" class="modal hidden">
+  <div class="modal-box">
+    <div class="modal-head">
+      <h2 id="modalTitle">参数表</h2>
+      <input id="modalSearch" placeholder="筛选：参数名 / 中文名 / 说明">
+      <button id="modalClose" class="ghost">关闭</button>
+    </div>
+    <div class="modal-body"><table id="paramTable"><thead><tr>
+      <th>参数</th><th>中文名</th><th>分组</th><th>说明</th>
+    </tr></thead><tbody></tbody></table></div>
+    <div class="modal-foot" id="modalHint">选中一行按回车或点「插入」</div>
+  </div>
+</div>
+
+<div id="settingsModal" class="modal hidden">
+  <div class="modal-box settings-box">
+    <div class="modal-head">
+      <h2>设置</h2>
+      <button id="settingsClose" class="ghost">关闭</button>
+    </div>
+
+    <div class="settings-body">
+      <nav id="settingsTools" class="settings-tools"></nav>
+
+      <div class="settings-pane">
+        <div class="pane-head">
+          <span id="paneTitle" class="pane-title">选一个工具</span>
+          <span id="paneState" class="pane-state"></span>
+        </div>
+        <div id="paneFields" class="pane-fields">
+          <div class="empty">左侧点一个工具</div>
+        </div>
+        <div class="pane-actions">
+          <button id="btnScan" class="ghost">自动扫描本机</button>
+          <button id="btnSaveTool" class="primary" disabled>保存这个工具</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="settings-foot">
+      <div class="about">由 parrot 所写 · 反馈或改进请发送邮箱至 <b>2571308976@qq.com</b></div>
+      <div class="cfg">项目目录 <span id="cfgAppRoot"></span></div>
+    </div>
+  </div>
+</div>
+
+<script src="/static/app.js"></script>
+</body>
+</html>
