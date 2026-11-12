@@ -1,5 +1,6 @@
 """Web 后端测试：静态页、工具 API、候选 API、执行 + SSE。"""
 import json
+import os
 import sys
 import threading
 import time
@@ -111,7 +112,8 @@ def main() -> int:
         assert any("中文输出正常" in x for x in lines), "中文乱码"
         assert code == 0
 
-        st, d = post("/api/cd", {"path": "..", "cwd": "C:/Users/25713/sqlmap-dev"})
+        base = str(Path(os.environ.get("USERPROFILE", "C:/Users/user")) / "sqlmap-dev")
+        st, d = post("/api/cd", {"path": "..", "cwd": base})
         print("[6] /api/cd .. ->", d["ok"], d["cwd"])
         assert d["ok"]
 
