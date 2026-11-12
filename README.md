@@ -2,7 +2,7 @@
 
 ## 为什么会有这个软件
 
-**纯粹因为作者太懒了。**（当然下列内容均由ai生成，瞎看看就行了，本仓库纯粹为了比赛使用）
+**纯粹因为作者太懒了。**
 
 - 不想背参数，`--level` `--risk` `--tamper` `--technique` 这些鬼东西每次都要查
 - 不想敲参数，一个 `-u` 加个 URL 都要复制粘贴三次
@@ -239,7 +239,7 @@ dirsearch 扫着，切到另一个标签跑 sqlmap，互不干扰。
 ### 安装
 
 ```powershell
-git clone https://github.com/<your-name>/web-fast.git
+git clone https://github.com/rfvmk55/web-fast.git
 cd web-fast
 
 python -m pip install -r requirements.txt
